@@ -60,11 +60,7 @@ class GitHubProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-// authenticate with GitHub using a personal access token
-  /// Authenticate using a GitHub personal access token.
-  ///
-  /// If an empty or whitespace token is supplied we treat it as a request
-  /// to access a public repository and delegate to [authenticatePublic].
+
   Future<void> authenticate(String token, String owner, String repo) async {
     if (token.trim().isEmpty) {
       // user didn't provide a token, fall back to public mode so dummy token is
@@ -226,7 +222,7 @@ class GitHubProvider extends ChangeNotifier {
       notifyListeners();
     }
   }
-
+// helper to merge the selected PR
   Future<void> mergePR() async {
     if (_selectedPR == null) return;
     
