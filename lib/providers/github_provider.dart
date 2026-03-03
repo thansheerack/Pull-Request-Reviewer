@@ -150,7 +150,7 @@ class GitHubProvider extends ChangeNotifier {
       notifyListeners();
     }
   }
-
+//approve the selected PR with an optional comment
   Future<void> approveReview(String comment) async {
     if (_selectedPR == null) return;
     
