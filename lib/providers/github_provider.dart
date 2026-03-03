@@ -99,6 +99,7 @@ class GitHubProvider extends ChangeNotifier {
     }
   }
 
+// fetch pull requests from GitHub based on the selected state (open, closed, all)
   Future<void> fetchPullRequests({String state = 'open'}) async {
     try {
       _isLoading = true;
@@ -116,6 +117,7 @@ class GitHubProvider extends ChangeNotifier {
     }
   }
 
+// select a pull request and fetch its reviews
   Future<void> selectPullRequest(PullRequest pr) async {
     try {
       _selectedPR = pr;
