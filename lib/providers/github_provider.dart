@@ -117,6 +117,7 @@ class GitHubProvider extends ChangeNotifier {
     }
   }
 
+// select a pull request and fetch its reviews
   Future<void> selectPullRequest(PullRequest pr) async {
     try {
       _selectedPR = pr;
