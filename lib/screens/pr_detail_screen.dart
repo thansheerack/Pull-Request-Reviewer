@@ -374,7 +374,7 @@ class _PRDetailScreenState extends State<PRDetailScreen> {
       ),
     );
   }
-
+// helper to build a review card based on review data
   Widget _buildReviewCard(dynamic review) {
     final statusColor = _getReviewStatusColor(review.status);
     final statusText = review.status.replaceAll('_', ' ');
