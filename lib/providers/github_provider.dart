@@ -11,7 +11,10 @@ class GitHubProvider extends ChangeNotifier {
   PullRequest? _selectedPR;
   List<Review> _reviews = [];
   
+  /// Loading state for pull request list operations (fetching PRs, authentication, etc.)
   bool _isLoading = false;
+  /// Separate loading state used when we load reviews or perform review-related actions.
+  bool _isReviewLoading = false;
   String? _error;
   String? _token;
   String? _owner;
@@ -23,6 +26,8 @@ class GitHubProvider extends ChangeNotifier {
   PullRequest? get selectedPR => _selectedPR;
   List<Review> get reviews => _reviews;
   bool get isLoading => _isLoading;
+  /// Indicates whether reviews or review actions are in flight.
+  bool get isReviewLoading => _isReviewLoading;
   String? get error => _error;
   bool get isAuthenticated => _token != null && _owner != null && _repo != null;
   String? get token => _token;
@@ -33,11 +38,18 @@ class GitHubProvider extends ChangeNotifier {
     _prefs = await SharedPreferences.getInstance();
     
     // Load saved credentials
-    final savedToken = _prefs.getString('github_token');
+    String? savedToken = _prefs.getString('github_token');
     final savedOwner = _prefs.getString('github_owner');
     final savedRepo = _prefs.getString('github_repo');
     
     if (savedToken != null && savedOwner != null && savedRepo != null) {
+      // Treat an empty stored token as public mode so UI and service behave
+      // consistently (token box will show 'abc123' below).
+      if (savedToken.trim().isEmpty) {
+        savedToken = 'abc123';
+        await _prefs.setString('github_token', savedToken);
+      }
+
       _token = savedToken;
       _owner = savedOwner;
       _repo = savedRepo;
@@ -49,7 +61,17 @@ class GitHubProvider extends ChangeNotifier {
   }
 
 // authenticate with GitHub using a personal access token
+  /// Authenticate using a GitHub personal access token.
+  ///
+  /// If an empty or whitespace token is supplied we treat it as a request
+  /// to access a public repository and delegate to [authenticatePublic].
   Future<void> authenticate(String token, String owner, String repo) async {
+    if (token.trim().isEmpty) {
+      // user didn't provide a token, fall back to public mode so dummy token is
+      // automatically used and persisted.
+      return authenticatePublic(owner, repo);
+    }
+
     try {
       _token = token;
       _owner = owner;
@@ -118,19 +140,23 @@ class GitHubProvider extends ChangeNotifier {
   }
 
 // select a pull request and fetch its reviews
+  /// Picks a pull request as the currently selected one and kicks off
+  /// loading of its reviews. Note that we intentionally do **not** block
+  /// on the network call in the caller so that UI navigation can happen
+  /// immediately. Instead the loading state is reflected in
+  /// [isReviewLoading], which only affects the detail screen.
   Future<void> selectPullRequest(PullRequest pr) async {
+    _selectedPR = pr;
+    _error = null;
+    _isReviewLoading = true;
+    notifyListeners();
+
     try {
-      _selectedPR = pr;
-      _isLoading = true;
-      notifyListeners();
-      
-      // Fetch reviews for the selected PR
       _reviews = await _service.fetchReviews(pr.number);
-      _isLoading = false;
-      notifyListeners();
     } catch (e) {
-      _isLoading = false;
       _error = e.toString();
+    } finally {
+      _isReviewLoading = false;
       notifyListeners();
     }
   }
@@ -139,7 +165,7 @@ class GitHubProvider extends ChangeNotifier {
     if (_selectedPR == null) return;
     
     try {
-      _isLoading = true;
+      _isReviewLoading = true;
       notifyListeners();
       
       await _service.createReview(
@@ -152,9 +178,10 @@ class GitHubProvider extends ChangeNotifier {
       await selectPullRequest(_selectedPR!);
     } catch (e) {
       _error = e.toString();
-      _isLoading = false;
-      notifyListeners();
       rethrow;
+    } finally {
+      _isReviewLoading = false;
+      notifyListeners();
     }
   }
 
@@ -162,7 +189,7 @@ class GitHubProvider extends ChangeNotifier {
     if (_selectedPR == null) return;
     
     try {
-      _isLoading = true;
+      _isReviewLoading = true;
       notifyListeners();
       
       await _service.createReview(
@@ -175,9 +202,10 @@ class GitHubProvider extends ChangeNotifier {
       await selectPullRequest(_selectedPR!);
     } catch (e) {
       _error = e.toString();
-      _isLoading = false;
-      notifyListeners();
       rethrow;
+    } finally {
+      _isReviewLoading = false;
+      notifyListeners();
     }
   }
 
@@ -185,7 +213,7 @@ class GitHubProvider extends ChangeNotifier {
     if (_selectedPR == null) return;
     
     try {
-      _isLoading = true;
+      _isReviewLoading = true;
       notifyListeners();
       
       await _service.createReview(
@@ -198,9 +226,10 @@ class GitHubProvider extends ChangeNotifier {
       await selectPullRequest(_selectedPR!);
     } catch (e) {
       _error = e.toString();
-      _isLoading = false;
-      notifyListeners();
       rethrow;
+    } finally {
+      _isReviewLoading = false;
+      notifyListeners();
     }
   }
 
@@ -208,22 +237,21 @@ class GitHubProvider extends ChangeNotifier {
     if (_selectedPR == null) return;
     
     try {
-      _isLoading = true;
+      _isReviewLoading = true; // merging is conceptually a review action
       notifyListeners();
       
       await _service.mergePullRequest(_selectedPR!.number);
       
       _error = 'PR merged successfully!';
-      _isLoading = false;
-      notifyListeners();
       
       // Refresh the PR list
       await fetchPullRequests();
     } catch (e) {
       _error = e.toString();
-      _isLoading = false;
-      notifyListeners();
       rethrow;
+    } finally {
+      _isReviewLoading = false;
+      notifyListeners();
     }
   }
 
@@ -240,6 +268,8 @@ class GitHubProvider extends ChangeNotifier {
     _selectedPR = null;
     _reviews = [];
     _error = null;
+    _isLoading = false;
+    _isReviewLoading = false;
     
     // Clear saved credentials
     await _prefs.remove('github_token');

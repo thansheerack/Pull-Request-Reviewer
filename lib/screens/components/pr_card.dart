@@ -32,9 +32,13 @@ class PullRequestCard extends StatelessWidget {
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       child: InkWell(
-        onTap: () async {
+        onTap: () {
           final navigator = Navigator.of(context);
-          await provider.selectPullRequest(pr);
+          // start loading the selected PR's data; we don't await it so the
+          // UI can navigate immediately. the detail screen listens to the
+          // provider's loading state and will show its own spinner.
+          provider.selectPullRequest(pr);
+
           if (context.mounted) {
             navigator.push(
               MaterialPageRoute(

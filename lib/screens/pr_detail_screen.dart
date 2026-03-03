@@ -176,7 +176,9 @@ class _PRDetailScreenState extends State<PRDetailScreen> {
                       ),
                       const Spacer(),
                       ElevatedButton.icon(
-                        onPressed: () => _showMergeDialog(context, provider),
+                        onPressed: provider.isReviewLoading
+                            ? null
+                            : () => _showMergeDialog(context, provider),
                         icon: const Icon(Icons.merge_type),
                         label: const Text('Merge'),
                       ),
@@ -185,40 +187,46 @@ class _PRDetailScreenState extends State<PRDetailScreen> {
                 ),
 
                 // Token Information
-                if (provider.token != null)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    child: Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: Colors.blue.shade50,
-                        border: Border.all(color: Colors.blue.shade200),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Authentication Token',
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.blue.shade700,
-                            ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.blue.shade50,
+                      border: Border.all(color: Colors.blue.shade200),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Authentication Token',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.blue.shade700,
                           ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          // show real token if available, otherwise fallback to dummy
+                          (provider.token == null || provider.token!.isEmpty)
+                              ? 'abc123'
+                              : provider.token!,
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: Colors.blue.shade600,
+                            fontFamily: 'Courier',
+                          ),
+                        ),
+                        if (provider.token == null || provider.token!.isEmpty) ...[
                           const SizedBox(height: 4),
-                          Text(
-                            provider.token!,
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: Colors.blue.shade600,
-                              fontFamily: 'Courier',
-                            ),
-                          ),
+                          
                         ],
-                      ),
+                      ],
                     ),
                   ),
+                ),
 
                 // Description
                 if (pr.description.isNotEmpty)
@@ -259,7 +267,7 @@ class _PRDetailScreenState extends State<PRDetailScreen> {
                 ),
                 const SizedBox(height: 12),
 
-                if (provider.isLoading)
+                if (provider.isReviewLoading)
                   const Padding(
                     padding: EdgeInsets.all(16),
                     child: Center(child: CircularProgressIndicator()),
@@ -342,10 +350,10 @@ class _PRDetailScreenState extends State<PRDetailScreen> {
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton(
-                          onPressed: provider.isLoading
+                          onPressed: provider.isReviewLoading
                               ? null
                               : () => _submitReview(context, provider),
-                          child: provider.isLoading
+                          child: provider.isReviewLoading
                               ? const SizedBox(
                                   height: 20,
                                   width: 20,
