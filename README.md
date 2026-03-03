@@ -259,7 +259,10 @@ if (response.statusCode == 403) {
 - Proper separation of concerns
 - Reusable components
 - Clean architecture pattern
-
+  
+### 10. **Dark Mode** ✨
+- Dark mode implimented
+  
 ---
 
 ## 🐞 Known Issues & Limitations
