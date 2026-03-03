@@ -260,7 +260,7 @@ if (response.statusCode == 403) {
 - Reusable components
 - Clean architecture pattern
   
-### 10. **Dark Mode** ✨
+### 11. **Dark Mode** ✨
 - Dark mode implimented
   
 ---
