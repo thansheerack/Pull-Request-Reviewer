@@ -139,12 +139,6 @@ class GitHubProvider extends ChangeNotifier {
     }
   }
 
-// select a pull request and fetch its reviews
-  /// Picks a pull request as the currently selected one and kicks off
-  /// loading of its reviews. Note that we intentionally do **not** block
-  /// on the network call in the caller so that UI navigation can happen
-  /// immediately. Instead the loading state is reflected in
-  /// [isReviewLoading], which only affects the detail screen.
   Future<void> selectPullRequest(PullRequest pr) async {
     _selectedPR = pr;
     _error = null;
@@ -259,7 +253,7 @@ class GitHubProvider extends ChangeNotifier {
     _error = null;
     notifyListeners();
   }
-
+// logout and clear all stored credentials and data
   Future<void> logout() async {
     _token = null;
     _owner = null;
